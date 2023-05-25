@@ -116,17 +116,17 @@ named!(comma<Token>, chain!(tag!(","), || Token::Comma));
 /// Must start with a letter or an underscore, can be followed by letters, digits or underscores.
 fn ident(input: &[u8]) -> IResult<&[u8], &[u8]> {
     use nom::Err::*;
+    use nom::ErrorKind;
     use nom::IResult::*;
-    use nom::{ErrorKind, Needed};
 
-    // first character must be 'a'...'z' | 'A'...'Z' | '_'
+    // first character must be 'a'..='z' | 'A'..='Z' | '_'
     match input.first().cloned() {
-        Some(b'a'...b'z') | Some(b'A'...b'Z') | Some(b'_') => {
+        Some(b'a'..=b'z') | Some(b'A'..=b'Z') | Some(b'_') => {
             let n = input
                 .iter()
                 .skip(1)
                 .take_while(|&&c| match c {
-                    b'a'...b'z' | b'A'...b'Z' | b'_' | b'0'...b'9' => true,
+                    b'a'..=b'z' | b'A'..=b'Z' | b'_' | b'0'..=b'9' => true,
                     _ => false,
                 })
                 .count();
@@ -145,7 +145,6 @@ named!(
     ))
 );
 
-/// Parse `func(`, returns `func`.
 named!(
     func<Token>,
     map!(
@@ -160,7 +159,7 @@ named!(
     )
 );
 
-/// Matches one or more digit characters `0`...`9`.
+/// Matches one or more digit characters `0`..=`9`.
 ///
 /// Never returns `nom::IResult::Incomplete`.
 ///

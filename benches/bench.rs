@@ -1,7 +1,4 @@
-#![feature(test)]
-
-extern crate meval;
-extern crate test;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use meval::max_array;
 use meval::min_array;
@@ -10,39 +7,41 @@ use meval::ContextProvider;
 use meval::Expr;
 use meval::FuncEvalError;
 use std::f64::consts;
-use test::Bencher;
 
 const EXPR: &str = "abs(sin(x + 1) * (x^2 + x + 1))";
 
-#[bench]
-fn parsing(b: &mut Bencher) {
-    b.iter(|| {
-        EXPR.parse::<Expr>().unwrap();
+fn parsing(c: &mut Criterion) {
+    let expr = black_box(EXPR);
+    c.bench_function("parsing", |b| {
+        b.iter(|| {
+            expr.parse::<Expr>().unwrap();
+        })
     });
 }
 
-#[bench]
-fn evaluation_matchcontext(b: &mut Bencher) {
-    let expr: Expr = EXPR.parse().unwrap();
+fn evaluation_matchcontext(c: &mut Criterion) {
+    let expr: Expr = black_box(EXPR.parse().unwrap());
     let func = expr.bind_with_context(MatchBuiltins, "x").unwrap();
-    b.iter(|| {
-        func(1.);
+    c.bench_function("evaluation_matchcontext", |b| {
+        b.iter(|| {
+            func(1.);
+        })
     });
 }
 
-#[bench]
-fn evaluation_hashcontext(b: &mut Bencher) {
-    let expr: Expr = EXPR.parse().unwrap();
+fn evaluation_hashcontext(c: &mut Criterion) {
+    let expr: Expr = black_box(EXPR.parse().unwrap());
     let func = expr.bind_with_context(Context::new(), "x").unwrap();
-    b.iter(|| {
-        func(1.);
+    c.bench_function("evaluation_hashcontext", |b| {
+        b.iter(|| {
+            func(1.);
+        })
     });
 }
 
-#[bench]
-fn default_context(b: &mut Bencher) {
-    let expr: Expr = "1 + 2 * 3".parse().unwrap();
-    b.iter(|| expr.eval());
+fn default_context(c: &mut Criterion) {
+    let expr: Expr = black_box("1 + 2 * 3".parse().unwrap());
+    c.bench_function("default_context", |b| b.iter(|| expr.eval()));
 }
 
 macro_rules! one_arg {
@@ -118,3 +117,12 @@ impl ContextProvider for MatchBuiltins {
         }
     }
 }
+
+criterion_group!(
+    benches,
+    parsing,
+    evaluation_matchcontext,
+    evaluation_hashcontext,
+    default_context
+);
+criterion_main!(benches);
